@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kasir Indomaret</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: #f4f4f9;
+            height: 100vh;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            width: 100%;
+            padding: 10px 0;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .scrollable-content {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            margin-top: 50px;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .product-list {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .product-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product-item .details {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .product-item .details h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+        }
+        .product-item .details p {
+            margin: 0;
+            color: #555;
+        }
+        .product-item .quantity-input {
+            display: flex;
+            align-items: center;
+        }
+        .product-item .quantity-input input {
+            width: 50px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .product-item .quantity-input button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .product-item .quantity-input button:hover {
+            background-color: #0056b3;
+        }
+        .cart-container {
+            flex: 1;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            box-sizing: border-box;
+            max-width: 45%; /* Mempersempit keranjang belanja */
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .total {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .checkout-section {
+            margin-top: 20px;
+        }
+        .checkout-section .input-group {
+            margin-bottom: 10px;
+        }
+        .checkout-section .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .checkout-section .input-group input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .checkout-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .checkout-button:hover {
+            background-color: #c82333;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+        .popup-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .popup-content h2 {
+            margin-bottom: 20px;
+        }
+        .popup-content .receipt-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .popup-content .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .popup-content .receipt-item .item-name {
+            text-align: left;
+        }
+        .popup-content .receipt-item .item-details {
+            text-align: right;
+        }
+        .popup-content .separator {
+            border-top: 1px solid #000;
+            margin: 20px 0;
+        }
+        .popup-content .payment-receipt {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .popup-content .total-receipt {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .popup-content .change-receipt {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .popup-content button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .popup-content button:hover {
+            background-color: #218838;
+        }
+        @media (max-width: 768px) {
+            .scrollable-content {
+                flex-direction: column;
+            }
+            .product-list, .cart-container {
+                margin-right: 0;
+                margin-bottom: 20px;
+                max-width: 100%; /* Mengembalikan maksimum lebar saat layar kecil */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Aplikasi Kasir Indomaret
+    </header>
+    <div class="scrollable-content">
+        <div class="product-list">
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Indomilk</h3>
+                    <p>Rp 5000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Indomilk', 5000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Aqua</h3>
+                    <p>Rp 3000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Aqua', 3000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Kopi Kapal Api</h3>
+                    <p>Rp 10000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Kopi Kapal Api', 10000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Indomie Goreng</h3>
+                    <p>Rp 2500</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Indomie Goreng', 2500, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Sari Roti</h3>
+                    <p>Rp 1500</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Sari Roti', 1500, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Gula Pasir</h3>
+                    <p>Rp 12000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Gula Pasir', 12000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Telur Ayam</h3>
+                    <p>Rp 20000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Telur Ayam', 20000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Minyak Goreng</h3>
+                    <p>Rp 25000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Minyak Goreng', 25000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Beras</h3>
+                    <p>Rp 100000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Beras', 100000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Garam</h3>
+                    <p>Rp 2000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Garam', 2000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Kecap Manis</h3>
+                    <p>Rp 15000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Kecap Manis', 15000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Mayones</h3>
+                    <p>Rp 10000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Mayones', 10000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Saus Tomato</h3>
+                    <p>Rp 8000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Saus Tomato', 8000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Pasta</h3>
+                    <p>Rp 12000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Pasta', 12000, event)">Tambah</button>
+                </div>
+            </div>
+            <div class="product-item" onclick="toggleQuantity(this)">
+                <div class="details">
+                    <h3>Mie Sedap Goreng</h3>
+                    <p>Rp 3000</p>
+                </div>
+                <div class="quantity-input" style="display: none;">
+                    <input type="number" value="1" min="1">
+                    <button onclick="addToCart('Mie Sedap Goreng', 3000, event)">Tambah</button>
+                </div>
+            </div>
+        </div>
+        <div class="cart-container">
+            <h2>Keranjang Belanja</h2>
+            <div id="cart-items"></div>
+            <div class="total">Total: Rp <span id="total-price">0</span></div>
+            <div class="checkout-section">
+                <div class="input-group">
+                    <label for="paymentAmount">Uang Pembeli</label>
+                    <input type="number" id="paymentAmount" placeholder="Masukkan uang pembeli">
+                </div>
+                <div class="input-group">
+                    <label for="changeAmount">Kembalian</label>
+                    <input type="text" id="changeAmount" readonly>
+                </div>
+                <button class="checkout-button" onclick="checkout()">Bayar</button>
+            </div>
+        </div>
+    </div>
+    <div class="popup" id="receiptPopup">
+        <div class="popup-content">
+            <h2 class="receipt-title">Indomart</h2>
+            <div id="receipt-items"></div>
+            <div class="separator"></div>
+            <div class="payment-receipt">
+                <span>Uang Pembeli:</span>
+                <span>Rp <span id="receipt-payment">0</span></span>
+            </div>
+            <div class="total-receipt">
+                <span>Total:</span>
+                <span>Rp <span id="receipt-total">0</span></span>
+            </div>
+            <div class="change-receipt">
+                <span>Kembalian:</span>
+                <span>Rp <span id="receipt-change">0</span></span>
+            </div>
+            <button onclick="printReceipt()">Cetak Nota</button>
+            <button onclick="closePopup()">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        const cartItems = document.getElementById('cart-items');
+        const totalPriceElement = document.getElementById('total-price');
+        const paymentAmountInput = document.getElementById('paymentAmount');
+        const changeAmountInput = document.getElementById('changeAmount');
+        const receiptPopup = document.getElementById('receiptPopup');
+        const receiptItems = document.getElementById('receipt-items');
+        const receiptPayment = document.getElementById('receipt-payment');
+        const receiptTotal = document.getElementById('receipt-total');
+        const receiptChange = document.getElementById('receipt-change');
+        let cart = [];
+        let totalPrice = 0;
+
+        function toggleQuantity(element) {
+            const quantityInput = element.querySelector('.quantity-input');
+            if (quantityInput.style.display === 'none' || quantityInput.style.display === '') {
+                quantityInput.style.display = 'flex';
+            } else {
+                quantityInput.style.display = 'none';
+            }
+        }
+
+        function addToCart(name, price, event) {
+            event.stopPropagation();
+            const quantityInput = event.target.previousElementSibling;
+            const quantity = parseInt(quantityInput.value, 10);
+
+            if (!isNaN(quantity) && quantity > 0) {
+                const itemIndex = cart.findIndex(item => item.name === name);
+                if (itemIndex !== -1) {
+                    cart[itemIndex].quantity += quantity;
+                } else {
+                    cart.push({ name, price, quantity });
+                }
+                updateCart();
+            } else {
+                alert('Silakan masukkan jumlah barang yang valid.');
+            }
+        }
+
+        function updateCart() {
+            cartItems.innerHTML = '';
+            totalPrice = 0;
+            cart.forEach(item => {
+                const cartItemDiv = document.createElement('div');
+                cartItemDiv.className = 'cart-item';
+                cartItemDiv.innerHTML = `${item.name} x ${item.quantity} - Rp ${item.price.toLocaleString('id-ID')}`;
+                cartItems.appendChild(cartItemDiv);
+                totalPrice += item.price * item.quantity;
+            });
+            totalPriceElement.textContent = totalPrice.toLocaleString('id-ID');
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const paymentAmount = parseFloat(paymentAmountInput.value);
+            if (!isNaN(paymentAmount) && paymentAmount >= totalPrice) {
+                const change = paymentAmount - totalPrice;
+                changeAmountInput.value = change.toLocaleString('id-ID');
+            } else {
+                changeAmountInput.value = '';
+            }
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Keranjang belanja kosong. Tidak ada yang bisa dibayar.');
+                return;
+            }
+            const paymentAmount = parseFloat(paymentAmountInput.value);
+            if (isNaN(paymentAmount) || paymentAmount < totalPrice) {
+                alert('Uang pembeli tidak cukup.');
+                return;
+            }
+            showReceipt();
+        }
+
+        function showReceipt() {
+            receiptItems.innerHTML = '';
+            cart.forEach(item => {
+                const receiptItemDiv = document.createElement('div');
+                receiptItemDiv.className = 'receipt-item';
+                receiptItemDiv.innerHTML = `
+                    <span class="item-name">${item.name} x ${item.quantity}</span>
+                    <span class="item-details">Rp ${item.price.toLocaleString('id-ID')}</span>
+                `;
+                receiptItems.appendChild(receiptItemDiv);
+            });
+            receiptPayment.textContent = paymentAmountInput.value.toLocaleString('id-ID');
+            receiptTotal.textContent = totalPrice.toLocaleString('id-ID');
+            const paymentAmount = parseFloat(paymentAmountInput.value);
+            const change = paymentAmount - totalPrice;
+            receiptChange.textContent = change.toLocaleString('id-ID');
+            receiptPopup.style.display = 'flex';
+        }
+
+        function closePopup() {
+            receiptPopup.style.display = 'none';
+            cart = [];
+            updateCart();
+            paymentAmountInput.value = '';
+            changeAmountInput.value = '';
+        }
+
+        function printReceipt() {
+            const printContents = document.getElementById('receiptPopup').innerHTML;
+            const originalContents = document.body.innerHTML;
+
+            document.body.innerHTML = printContents;
+
+            window.print();
+
+            document.body.innerHTML = originalContents;
+        }
+
+        paymentAmountInput.addEventListener('input', calculateChange);
+    </script>
+</body>
+</html>
